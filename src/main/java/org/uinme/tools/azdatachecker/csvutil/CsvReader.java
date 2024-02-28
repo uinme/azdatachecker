@@ -15,7 +15,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 @Component
 public class CsvReader {
 
-    public List<List<String>> read(Path path) {
+    public Csv read(Path path) {
         CsvSchema schema =
                 CsvSchema
                     .emptySchema()
@@ -30,7 +30,9 @@ public class CsvReader {
                         .readerFor(List.class)
                         .with(schema)
                         .readValues(path.toFile());
-            return (List<List<String>>) iterator.readAll();
+            Csv csv = new Csv();
+            csv.setData((List<List<String>>) iterator.readAll());
+            return csv;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
