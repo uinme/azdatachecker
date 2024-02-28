@@ -1,0 +1,12 @@
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+
+  datasource:
+    type: org.springframework.jdbc.datasource.DriverManagerDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgres://192.168.10.109:5432/postgres
+    username: postgres
+    password: postgres
+    
