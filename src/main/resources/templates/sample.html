@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: center;
+            column-gap: 5px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            white-space: nowrap;
+            max-width: 50vw;
+        }
+
+        .table-csv {
+            border-collapse: collapse;
+
+        }
+
+        .table-csv th, .table-csv td {
+            border: solid 1px #333;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="table-wrapper">
+            <table class="table-csv">
+                <tr>
+                    <th th:each="i : ${#numbers.sequence(1, diff.originalRows[0].columns.size())}" th:text="${i}"></th>
+                </tr>
+                <tr th:each="originalRow : ${diff.originalRows}">
+                  <td th:each="column : ${originalRow.columns}" th:text="${column.value}"></td>
+                </tr>
+            </table>
+        </div>
+        <div class="table-wrapper">
+            <table class="table-csv">
+                <tr>
+                    <th th:each="i : ${#numbers.sequence(1, diff.modifiedRows[0].columns.size())}" th:text="${i}"></th>
+                </tr>
+                <tr th:each="modifiedRow : ${diff.modifiedRows}">
+                  <td th:each="column : ${modifiedRow.columns}" th:text="${column.value}" th:style="${column.isDiff}? 'background-color: #f00' : 'background-color: #fff'"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const tables = document.querySelectorAll(".table-wrapper");
+        for (let i = 0; i < tables.length; i++) {
+            const table = tables[i];
+            table.addEventListener("scroll", () => {
+                const ratio = table.scrollLeft / (table.scrollWidth - table.clientWidth);
+                for (let j = 0; j < tables.length; j++) {
+                    if (i == j) continue;
+                    const otherTable = tables[j];
+                    otherTable.scrollLeft = (otherTable.scrollWidth - otherTable.clientWidth) * ratio;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

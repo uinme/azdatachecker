@@ -16,20 +16,21 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 public class CsvReader {
 
     public Csv read(Path path) {
-        CsvSchema schema =
-                CsvSchema
-                    .emptySchema()
-                    .withoutHeader();
-        
-        CsvMapper mapper = new CsvMapper();
-        mapper.enable(CsvParser.Feature.WRAP_AS_ARRAY);
-        
+        CsvSchema schema = CsvSchema
+                .emptySchema()
+                .withoutHeader();
+
+        CsvMapper mapper = CsvMapper
+                .builder()
+                .enable(CsvParser.Feature.WRAP_AS_ARRAY)
+                .enable(CsvParser.Feature.SKIP_EMPTY_LINES)
+                .build();
+
         try {
-            MappingIterator<List<String>> iterator =
-                    mapper
-                        .readerFor(List.class)
-                        .with(schema)
-                        .readValues(path.toFile());
+            MappingIterator<List<String>> iterator = mapper
+                    .readerFor(List.class)
+                    .with(schema)
+                    .readValues(path.toFile());
             Csv csv = new Csv();
             csv.setData((List<List<String>>) iterator.readAll());
             return csv;
@@ -37,5 +38,5 @@ public class CsvReader {
             throw new UncheckedIOException(e);
         }
     }
-    
+
 }
