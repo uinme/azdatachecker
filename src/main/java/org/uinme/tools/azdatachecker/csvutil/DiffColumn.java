@@ -6,4 +6,5 @@ import lombok.Data;
 public class DiffColumn {
     private String value;
     private boolean isDiff;
+    private String status;
 }
