@@ -4,8 +4,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -15,6 +24,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.uinme.tools.azdatachecker.csvutil.Csv;
 import org.uinme.tools.azdatachecker.csvutil.CsvDiff;
+import org.uinme.tools.azdatachecker.csvutil.CsvFileItem;
 import org.uinme.tools.azdatachecker.csvutil.CsvReader;
 import org.uinme.tools.azdatachecker.csvutil.Diff;
 import org.uinme.tools.azdatachecker.csvutil.FileDigest;
@@ -38,6 +48,39 @@ public class Application {
     }
 
     public void run(String... args) {
+        Path dataDirectory = Paths.get("C:/Users/uinme/Desktop/csv");
+        try {
+            Map<String, List<CsvFileItem>> csvFileItems = Files.list(dataDirectory).map(p -> {
+               String baseName = p.toFile().getName();
+               String name = baseName.substring(0, baseName.indexOf("."));
+               Matcher matcher = Pattern.compile(".*_(\\d{14})$").matcher(name);
+               CsvFileItem item = new CsvFileItem();
+               item.setPath(p);
+               if (matcher.find()) {
+                   LocalDateTime dateTime = LocalDateTime.parse(matcher.group(1), DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                   item.setModifiedDate(dateTime);
+                   item.setBaseName(name.replaceAll("_\\d{14}$", ""));
+               } else {
+                   item.setModifiedDate(LocalDateTime.MIN);
+                   item.setBaseName(name);
+               }
+               return item;
+            }).collect(Collectors.groupingBy(CsvFileItem::getBaseName));
+            
+            csvFileItems.forEach((k, v) -> v.sort((i1, i2) -> i1.getModifiedDate().compareTo(i2.getModifiedDate())));
+            
+            for (String key : csvFileItems.keySet()) {
+                List<CsvFileItem> item = csvFileItems.get(key);
+                if (item.size() > 1) {
+                    System.out.println(item.get(item.size() - 1));
+                } else {
+                    System.out.println(item);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        
         Csv data1 = csvReader.read(Paths.get("C:/Users/uinme/Desktop/data1.csv"));
         Csv data2 = csvReader.read(Paths.get("C:/Users/uinme/Desktop/data2.csv"));
         data1.sortMutable();
