@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class CsvFileList {
                 String baseName = FilenameUtils.getBaseName(p.toFile().getName());
                 Matcher matcher = Pattern.compile(".*_(\\d{14})$").matcher(baseName);
                 CsvFileItem item = new CsvFileItem();
+                item.setFullName(baseName);
                 item.setPath(p);
                 if (matcher.find()) {
                     LocalDateTime dateTime = LocalDateTime.parse(matcher.group(1),
@@ -37,6 +39,13 @@ public class CsvFileList {
                 } else {
                     item.setModifiedDate(LocalDateTime.MIN);
                     item.setBaseName(baseName);
+                }
+                Matcher businessDateMatcher = Pattern.compile("(?<=[^\\d]*)\\d{8}(?=[^\\d]+)").matcher(baseName);
+                if (businessDateMatcher.find()) {
+                    String businessDateString = businessDateMatcher.group(0);
+                    item.setBusinessDate(LocalDate.parse(businessDateString, DateTimeFormatter.ofPattern("yyyyMMdd")));
+                } else {
+                    item.setBusinessDate(LocalDate.MIN);
                 }
                 return item;
             }).collect(Collectors.groupingBy(CsvFileItem::getBaseName));
@@ -63,6 +72,10 @@ public class CsvFileList {
 
     public Path getDataDirectory() {
         return dataDirectory;
+    }
+    
+    public Map<String, List<CsvFileItem>> getCsvFileItems() {
+        return csvFileItems;
     }
 
 }

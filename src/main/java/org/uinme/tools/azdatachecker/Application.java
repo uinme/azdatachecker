@@ -1,13 +1,21 @@
 package org.uinme.tools.azdatachecker;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.thymeleaf.TemplateEngine;
 import org.uinme.tools.azdatachecker.csvutil.CsvDiff;
+import org.uinme.tools.azdatachecker.csvutil.CsvFileItem;
 import org.uinme.tools.azdatachecker.csvutil.CsvFileList;
 import org.uinme.tools.azdatachecker.csvutil.CsvReader;
 import org.uinme.tools.azdatachecker.csvutil.FileDigest;
@@ -38,9 +46,37 @@ public class Application {
 
     public void run(String... args) {
         CsvFileList csvFileList = new CsvFileList(Paths.get("C:/Users/uinme/Desktop/csv"));
-        csvFileList.getLatestFiles().stream().forEach(System.out::println);
         
-        ddlMapper.createTable();
+        Resource currentResource = new ClassPathResource(".");
+        String currentDirectory;
+        Path downloadDirectory;
+        
+        try {
+            currentDirectory = currentResource.getFile().toString();
+            downloadDirectory = Paths.get(currentDirectory, "download");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        
+        if (!Files.exists(downloadDirectory)) {
+            try {
+                Files.createDirectory(downloadDirectory);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        
+        List<CsvFileItem> csvFileItems = csvFileList.getLatestFiles();
+        
+        for (CsvFileItem csvFileItem : csvFileItems) {
+            try {
+                Files.copy(csvFileItem.getPath(), Paths.get(downloadDirectory.toString(), csvFileItem.getBaseName() + ".csv"));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        
+//        ddlMapper.createTable();
 //        testMapper.selectAll();
         
         // Compare CSV count to DB count
